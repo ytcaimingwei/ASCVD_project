@@ -197,8 +197,7 @@ mutiVolcano = function(df,         # Data for plotting
                show.legend = NA
     ) +
     #Draw middle label tiles
-
-    ggplot2::geom_tile(data = dfSig,
+  ggplot2::geom_tile(data = dfSig,
                        ggplot2::aes(x = Cluster, y = 0, fill = Cluster), 
                        color = "black",
                        height = log2(FC) * 1.5,
