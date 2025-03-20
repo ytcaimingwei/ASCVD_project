@@ -3,7 +3,7 @@
 Gut bacteria derived odd chain fatty acid modulates cholesterol homeostasis and alleviates atherosclerosis
 
 
-SOURCE CODE
+# SOURCE CODE
 
 Refer to the Methods section for details.
 
@@ -12,9 +12,9 @@ Refer to the Methods section for details.
 
 
 
-ANALYSIS PIPELINE
+# ANALYSIS PIPELINE
 
-I.	Megatnomic analysis
+# I.	Megatnomic analysis
 
 1.	Quality control of metagenomic reads
 
@@ -38,7 +38,7 @@ coverm contig --single $entry -r mutA.fa --min-read-percent-identity 95 --min-re
 
 
 
-II.	Identification of PA synthesis genes in Unified Human Gastrointestinal Genome (UHGG) collection
+# II.	Identification of PA synthesis genes in Unified Human Gastrointestinal Genome (UHGG) collection
 
 blastp -db gene.fasta.faa -query NBT_total.faa -outfmt 6 -out NBT_total.faa_1E3_50.blastp -evalue 1E-3 -num_threads 64 -qcov_hsp_perc 50
 
@@ -46,37 +46,37 @@ blastp -db gene.fasta.faa -query NBT_total.faa -outfmt 6 -out NBT_total.faa_1E3_
 
 
 
-III.	Metatranscriptomic analysis of mouse liver
+# III.	Metatranscriptomic analysis of mouse liver
 
 1.	derep analysis
 
-# Load necessary library
+#Load necessary library
 library(DESeq2)
 
-# Read CSV file
+#Read CSV file
 data <- read.csv("gene_expression.csv", row.names = 1)
 
-# Create a data frame to store group information
+#Create a data frame to store group information
 group_info <- data.frame(
   sample = colnames(data),
   condition = factor(rep(c("BU", "CHD", "PBS"), each = 4))
 )
 
-# Check for NA values in the data and remove those rows
+#Check for NA values in the data and remove those rows
 data <- na.omit(data)
 
-# Convert FPKM values to pseudocounts
-# Ensure all values are within the integer range
+#Convert FPKM values to pseudocounts
+#Ensure all values are within the integer range
 data_counts <- round(data * 1e2)
 data_counts[data_counts < 0] <- 0  # Convert negative values to 0
 
-# Create DESeq dataset
+#Create DESeq dataset
 dds <- DESeqDataSetFromMatrix(countData = data_counts, colData = group_info, design = ~ condition)
 
-# Run DESeq analysis
+#Run DESeq analysis
 dds <- DESeq(dds)
 
-# Define comparison function
+#Define comparison function
 perform_comparison <- function(dds, group1, group2) {
   res <- results(dds, contrast = c("condition", group1, group2))
   res$gene <- rownames(res)
@@ -89,31 +89,31 @@ perform_comparison <- function(dds, group1, group2) {
   return(res)
 }
 
-# Perform comparisons between different groups
+#Perform comparisons between different groups
 res_BU_vs_CHD <- perform_comparison(dds, "BU", "CHD")
 res_BU_vs_PBS <- perform_comparison(dds, "BU", "PBS")
 res_PBS_vs_CHD <- perform_comparison(dds, "PBS", "CHD")
 
-# Merge results
+#Merge results
 result <- rbind(res_BU_vs_CHD, res_BU_vs_PBS, res_PBS_vs_CHD)
 
-# Output results to a CSV file
+#Output results to a CSV file
 output_file <- "differential_expression_results.csv"
 write.csv(result, file = output_file, row.names = FALSE)
 
-# Print output file path
+#Print output file path
 cat("Results saved to:", output_file, "\n")
 
 2.	multi_volcano_plot
 
-# Load packages
+#Load packages
 library(tidyverse)
 library(ggrepel)   # For labeling
 
-# Read CSV file
+#Read CSV file
 data <- read.csv("differential_expression_results.csv")
 
-# Define a custom function for later use
+#Define a custom function for later use
 mutiVolcano = function(df,         # Data for plotting
                        P = 0.05,   # P-value cutoff
                        FC = 1.5,   # Fold change cutoff
@@ -127,7 +127,7 @@ mutiVolcano = function(df,         # Data for plotting
                        tileLabel = "Label",  # Option for labeling comparison pairs. Options are "Label" and "Num". "Label" shows group names, "Num" shows numbers to avoid clutter
                        tileColor = NULL      # Colors for comparison pairs
 ){
-  # Group data based on P-value cutoff
+  #Group data based on P-value cutoff
   dfSig = df %>% 
     mutate(log2FC = log2(FC)) %>%
     filter(FC > {{FC}} | FC < (1/{{FC}})) %>%
@@ -135,18 +135,18 @@ mutiVolcano = function(df,         # Data for plotting
     mutate(Group = factor(Group, levels = GroupName)) %>%
     mutate(Cluster = factor(Cluster, levels = unique(Cluster)))   # Cluster order follows the order in the file
   
-  # Prepare data for bar plot
+  #Prepare data for bar plot
   dfBar = dfSig %>%
     group_by(Cluster) %>%
     summarise(min = min(log2FC, na.rm = T),
               max = max(log2FC, na.rm = T)
     )
   
-  # Prepare data for scatter plot
+  #Prepare data for scatter plot
   dfJitter = dfSig %>%
     mutate(jitter = jitter(as.numeric(Cluster), factor = 2))
   
-  # Prepare data for labeling differentially expressed genes
+  #Prepare data for labeling differentially expressed genes
   if(labeltype == "1"){
     # Label type 1: Top N points with smallest P-values
     dfLabel = dfJitter %>%
@@ -161,7 +161,7 @@ mutiVolcano = function(df,         # Data for plotting
     dfLabel = dfJitter %>% slice()
   }
   
-  # Create the plot
+  #Create the plot
   p = ggplot() +
     # Draw bar plot
     geom_col(data = dfBar, aes(x = Cluster, y = max), fill = barFill) +
@@ -172,14 +172,14 @@ mutiVolcano = function(df,         # Data for plotting
                size = pointSize,
                show.legend = NA
     ) +
-    # Draw middle label tiles
+    #Draw middle label tiles
     ggplot2::geom_tile(data = dfSig,
                        ggplot2::aes(x = Cluster, y = 0, fill = Cluster), 
                        color = "black",
                        height = log2(FC) * 1.5,
                        show.legend = NA
     ) + 
-    # Label differentially expressed genes
+    #Label differentially expressed genes
     ggrepel::geom_text_repel(
       data = dfLabel,
       aes(x = jitter,                   # geom_text_repel labeling function
@@ -209,7 +209,7 @@ mutiVolcano = function(df,         # Data for plotting
                                  labels = c(paste0(1:length(unique(dfSig$Cluster)), ": ", unique(dfSig$Cluster))))
   }
   
-  # Customize theme
+  #Customize theme
   p = p + ggplot2::scale_color_manual(values = pointColor) +
     theme_classic() +
     ggplot2::scale_y_continuous(n.breaks = 5) + 
@@ -227,12 +227,12 @@ mutiVolcano = function(df,         # Data for plotting
   return(p)
 }
 
-# Read data
+#Read data
 df = read.csv("differential_expression_results.csv") %>%  # Read local CSV file
   as_tibble() %>%
   set_names(c("Name", "FC", "Pvalue", "Cluster"))
 
-# Call the function to plot
+#Call the function to plot
 mutiVolcano(
   df = df,    # Data for plotting
   P = 0.05,   # P-value cutoff
@@ -248,6 +248,5 @@ mutiVolcano(
   tileColor = RColorBrewer::brewer.pal(length(unique(df$Cluster)), "Set3")   # Colors for comparison pairs
 )
 
-# Save the plot
+#Save the plot
 ggsave("mutiVolcano.pdf", width = 8, height = 6)
-
