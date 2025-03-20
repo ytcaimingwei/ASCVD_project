@@ -10,8 +10,7 @@ sickle se -t sanger -q 25 -f $entry -o $entry.t.fq
 
 2.	Remove human reads
 
-bbmap.sh minid=0.95 maxindel=3 bwr=0.16 bw=12 quickmatch fast minhits=2 path=/lustre/home/mwcai/data/remove_human_reads_from_MG_MT qtrim=rl trimq=10 untrim -Xmx23g in=$entry outu=$entry.clean.fq outm=$entry.hu
-man.fq
+bbmap.sh minid=0.95 maxindel=3 bwr=0.16 bw=12 quickmatch fast minhits=2 path=/lustre/home/mwcai/data/remove_human_reads_from_MG_MT qtrim=rl trimq=10 untrim -Xmx23g in=$entry outu=$entry.clean.fq outm=$entry.human.fq
 
 3.	Fastq to fasta format
 seqtk seq -a  $entry > $entry.fa
