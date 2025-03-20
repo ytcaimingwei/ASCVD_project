@@ -204,8 +204,7 @@ mutiVolcano = function(df,         # Data for plotting
                        show.legend = NA
     ) + 
     #Label differentially expressed genes
- 
-    ggrepel::geom_text_repel(
+  ggrepel::geom_text_repel(
       data = dfLabel,
       aes(x = jitter,                   # geom_text_repel labeling function
           y = log2FC,          
