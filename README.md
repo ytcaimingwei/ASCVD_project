@@ -22,8 +22,7 @@ sickle se -t sanger -q 25 -f $entry -o $entry.t.fq
 
 2.	Remove human reads
 
-bbmap.sh minid=0.95 maxindel=3 bwr=0.16 bw=12 quickmatch fast minhits=2 path=/lustre/home/mwcai/data/remove_human_reads_from_MG_MT qtrim=rl trimq=10 untrim -Xmx23g in=$entry outu=$entry.clean.fq outm=$entry.hu
-man.fq
+bbmap.sh minid=0.95 maxindel=3 bwr=0.16 bw=12 quickmatch fast minhits=2 path=/lustre/home/mwcai/data/remove_human_reads_from_MG_MT qtrim=rl trimq=10 untrim -Xmx23g in=$entry outu=$entry.clean.fq outm=$entry.human.fq
 
 3.	Fastq to fasta format
 
@@ -51,36 +50,44 @@ blastp -db gene.fasta.faa -query NBT_total.faa -outfmt 6 -out NBT_total.faa_1E3_
 
 # III.	Metatranscriptomic analysis of mouse liver
 
-
 1.	derep analysis
 
 #Load necessary library
+
 library(DESeq2)
 
 #Read CSV file
+
 data <- read.csv("gene_expression.csv", row.names = 1)
 
 #Create a data frame to store group information
+
 group_info <- data.frame(
   sample = colnames(data),
   condition = factor(rep(c("BU", "CHD", "PBS"), each = 4))
 )
 
 #Check for NA values in the data and remove those rows
+
 data <- na.omit(data)
 
 #Convert FPKM values to pseudocounts
+
 #Ensure all values are within the integer range
+
 data_counts <- round(data * 1e2)
 data_counts[data_counts < 0] <- 0  # Convert negative values to 0
 
 #Create DESeq dataset
+
 dds <- DESeqDataSetFromMatrix(countData = data_counts, colData = group_info, design = ~ condition)
 
 #Run DESeq analysis
+
 dds <- DESeq(dds)
 
 #Define comparison function
+
 perform_comparison <- function(dds, group1, group2) {
   res <- results(dds, contrast = c("condition", group1, group2))
   res$gene <- rownames(res)
@@ -94,30 +101,37 @@ perform_comparison <- function(dds, group1, group2) {
 }
 
 #Perform comparisons between different groups
+
 res_BU_vs_CHD <- perform_comparison(dds, "BU", "CHD")
 res_BU_vs_PBS <- perform_comparison(dds, "BU", "PBS")
 res_PBS_vs_CHD <- perform_comparison(dds, "PBS", "CHD")
 
 #Merge results
+
 result <- rbind(res_BU_vs_CHD, res_BU_vs_PBS, res_PBS_vs_CHD)
 
 #Output results to a CSV file
+
 output_file <- "differential_expression_results.csv"
 write.csv(result, file = output_file, row.names = FALSE)
 
 #Print output file path
+
 cat("Results saved to:", output_file, "\n")
 
 2.	multi_volcano_plot
 
 #Load packages
+
 library(tidyverse)
 library(ggrepel)   # For labeling
 
 #Read CSV file
+
 data <- read.csv("differential_expression_results.csv")
 
 #Define a custom function for later use
+
 mutiVolcano = function(df,         # Data for plotting
                        P = 0.05,   # P-value cutoff
                        FC = 1.5,   # Fold change cutoff
@@ -131,7 +145,9 @@ mutiVolcano = function(df,         # Data for plotting
                        tileLabel = "Label",  # Option for labeling comparison pairs. Options are "Label" and "Num". "Label" shows group names, "Num" shows numbers to avoid clutter
                        tileColor = NULL      # Colors for comparison pairs
 ){
+ 
   #Group data based on P-value cutoff
+
   dfSig = df %>% 
     mutate(log2FC = log2(FC)) %>%
     filter(FC > {{FC}} | FC < (1/{{FC}})) %>%
@@ -140,6 +156,7 @@ mutiVolcano = function(df,         # Data for plotting
     mutate(Cluster = factor(Cluster, levels = unique(Cluster)))   # Cluster order follows the order in the file
   
   #Prepare data for bar plot
+
   dfBar = dfSig %>%
     group_by(Cluster) %>%
     summarise(min = min(log2FC, na.rm = T),
@@ -147,10 +164,12 @@ mutiVolcano = function(df,         # Data for plotting
     )
   
   #Prepare data for scatter plot
+
   dfJitter = dfSig %>%
     mutate(jitter = jitter(as.numeric(Cluster), factor = 2))
   
   #Prepare data for labeling differentially expressed genes
+
   if(labeltype == "1"){
     # Label type 1: Top N points with smallest P-values
     dfLabel = dfJitter %>%
@@ -166,6 +185,7 @@ mutiVolcano = function(df,         # Data for plotting
   }
   
   #Create the plot
+
   p = ggplot() +
     # Draw bar plot
     geom_col(data = dfBar, aes(x = Cluster, y = max), fill = barFill) +
@@ -177,6 +197,7 @@ mutiVolcano = function(df,         # Data for plotting
                show.legend = NA
     ) +
     #Draw middle label tiles
+
     ggplot2::geom_tile(data = dfSig,
                        ggplot2::aes(x = Cluster, y = 0, fill = Cluster), 
                        color = "black",
@@ -184,6 +205,7 @@ mutiVolcano = function(df,         # Data for plotting
                        show.legend = NA
     ) + 
     #Label differentially expressed genes
+ 
     ggrepel::geom_text_repel(
       data = dfLabel,
       aes(x = jitter,                   # geom_text_repel labeling function
@@ -214,6 +236,7 @@ mutiVolcano = function(df,         # Data for plotting
   }
   
   #Customize theme
+
   p = p + ggplot2::scale_color_manual(values = pointColor) +
     theme_classic() +
     ggplot2::scale_y_continuous(n.breaks = 5) + 
@@ -232,11 +255,13 @@ mutiVolcano = function(df,         # Data for plotting
 }
 
 #Read data
+
 df = read.csv("differential_expression_results.csv") %>%  # Read local CSV file
   as_tibble() %>%
   set_names(c("Name", "FC", "Pvalue", "Cluster"))
 
 #Call the function to plot
+
 mutiVolcano(
   df = df,    # Data for plotting
   P = 0.05,   # P-value cutoff
@@ -253,4 +278,5 @@ mutiVolcano(
 )
 
 #Save the plot
+
 ggsave("mutiVolcano.pdf", width = 8, height = 6)
