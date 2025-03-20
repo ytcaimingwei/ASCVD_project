@@ -23,6 +23,10 @@ metawrap kraken2 -t 32 -o kraken2_SRR11461968 SRR11461968.fastq.t.fq.clean.fq.fa
 coverm contig --single $entry -r mutA.fa --min-read-percent-identity 95 --min-read-aligned-percent 50  -o $entry.coverm.mutA
 
 
+
+
+
+
 II. Identification of PA synthesis genes in Unified Human Gastrointestinal Genome (UHGG) collection
 
 blastp -db gene.fasta.faa -query NBT_total.faa -outfmt 6 -out NBT_total.faa_1E3_50.blastp -evalue 1E-3 -num_threads 64 -qcov_hsp_perc 50
