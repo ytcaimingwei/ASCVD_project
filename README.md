@@ -26,12 +26,15 @@ bbmap.sh minid=0.95 maxindel=3 bwr=0.16 bw=12 quickmatch fast minhits=2 path=/lu
 man.fq
 
 3.	Fastq to fasta format
+
 seqtk seq -a $entry > $entry.fa
 
 4.	Taxonomic and abundance of the high-quality reads
+
 metawrap kraken2 -t 32 -o kraken2_SRR11461968 SRR11461968.fastq.t.fq.clean.fq.fa
 
 5.	Assessment of PA synthesis gene abundance in the two published cohorts
+
 coverm contig --single $entry -r mutA.fa --min-read-percent-identity 95 --min-read-aligned-percent 50 -o $entry.coverm.mutA
 
 
@@ -47,6 +50,7 @@ blastp -db gene.fasta.faa -query NBT_total.faa -outfmt 6 -out NBT_total.faa_1E3_
 
 
 # III.	Metatranscriptomic analysis of mouse liver
+
 
 1.	derep analysis
 
