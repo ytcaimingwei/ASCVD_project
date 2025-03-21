@@ -34,7 +34,7 @@ metawrap kraken2 -t 32 -o kraken2_SRR11461968 SRR11461968.fastq.t.fq.clean.fq.fa
 
 5.	Assessment of PA synthesis gene abundance in the two published cohorts
 
-coverm contig --single $entry -r mutA.fa --min-read-percent-identity 95 --min-read-aligned-percent 50 -o $entry.coverm.mutA
+coverm contig --single $entry -r ref_gene.fa --min-read-percent-identity 95 --min-read-aligned-percent 50 -o $entry.coverm.ref_gene -m rpkm
 
 
 
